@@ -78,7 +78,8 @@ export function WeatherPage() {
       const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?latitude=${latitude}&longitude=${longitude}&count=1`);
       const geoData = await geoRes.json();
       if (geoData.results?.[0]?.name) {
-        form.setValue('location', geoData.results[0].name);
+        const locationName = `${geoData.results[0].name}${geoData.results[0].country ? ', ' + geoData.results[0].country : ''}`;
+        form.setValue('location', locationName);
       } else {
         form.setValue('location', `Lat: ${latitude.toFixed(2)}, Lon: ${longitude.toFixed(2)}`);
       }
@@ -109,7 +110,8 @@ export function WeatherPage() {
         }
         latitude = geoData.results[0].latitude;
         longitude = geoData.results[0].longitude;
-        name = geoData.results[0].name;
+        name = `${geoData.results[0].name}${geoData.results[0].country ? ', ' + geoData.results[0].country : ''}`;
+        form.setValue('location', name);
       }
 
       const weatherParams = new URLSearchParams({
