@@ -15,7 +15,7 @@ export function CurrentWeather({ data }: CurrentWeatherProps) {
   return (
     <Card className="bg-gradient-to-br from-primary/20 to-background">
       <CardHeader>
-        <CardTitle className="text-2xl font-headline">Current Weather in {data.locationName}</CardTitle>
+        <CardTitle className="text-2xl font-headline">Location: {data.locationName}</CardTitle>
       </CardHeader>
       <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
         <div className="flex items-center gap-6">
