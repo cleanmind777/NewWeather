@@ -4,7 +4,9 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { MapPin, Wind, Thermometer } from 'lucide-react';
+import { MapPin, Wind, Thermometer, CalendarIcon } from 'lucide-react';
+import { format, subDays } from 'date-fns';
+import { DateRange } from 'react-day-picker';
 
 import type { WeatherData, TemperatureUnit, WindSpeedUnit } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
@@ -13,19 +15,27 @@ import { getWeatherInfo } from '@/components/weather-icons';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Form, FormField, FormItem, FormControl, FormMessage } from '@/components/ui/form';
+import { Form, FormField, FormItem, FormControl, FormMessage, FormLabel } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
+
 import { CurrentWeather } from '@/components/current-weather';
 import { HourlyForecast } from '@/components/hourly-forecast';
 import { DailyForecast } from '@/components/daily-forecast';
 import { WeatherSkeleton } from '@/components/weather-skeleton';
+import { HistoricalWeather } from '@/components/historical-weather';
 
 const formSchema = z.object({
   location: z.string().min(2, { message: 'Location must be at least 2 characters.' }),
   tempUnit: z.enum(['celsius', 'fahrenheit']),
   windUnit: z.enum(['kmh', 'mph']),
+  dateRange: z.object({
+    from: z.date().optional(),
+    to: z.date().optional(),
+  }).optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -33,6 +43,10 @@ type FormValues = z.infer<typeof formSchema>;
 export function WeatherPage() {
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(false);
+  const [date, setDate] = useState<DateRange | undefined>({
+    from: undefined,
+    to: undefined,
+  });
   const { toast } = useToast();
 
   const form = useForm<FormValues>({
@@ -65,6 +79,12 @@ export function WeatherPage() {
         temperature_unit: values.tempUnit,
         wind_speed_unit: values.windUnit,
       });
+
+      if (date?.from && date?.to) {
+        weatherParams.append('start_date', format(date.from, 'yyyy-MM-dd'));
+        weatherParams.append('end_date', format(date.to, 'yyyy-MM-dd'));
+      }
+
 
       const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?${weatherParams}`);
       const rawWeatherData = await weatherRes.json();
@@ -130,22 +150,22 @@ export function WeatherPage() {
                   </FormItem>
                 )}
               />
-              <div className="flex flex-col sm:flex-row gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <FormField
                   control={form.control}
                   name="tempUnit"
                   render={({ field }) => (
                     <FormItem className="space-y-3">
-                      <Label className="flex items-center gap-2"><Thermometer className="h-4 w-4"/> Temperature</Label>
+                      <FormLabel className="flex items-center gap-2"><Thermometer className="h-4 w-4"/> Temperature</FormLabel>
                       <FormControl>
                         <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-4">
                           <FormItem className="flex items-center space-x-2">
                             <FormControl><RadioGroupItem value="celsius" id="celsius" /></FormControl>
-                            <Label htmlFor="celsius">Celsius (°C)</Label>
+                            <FormLabel htmlFor="celsius" className="font-normal">Celsius (°C)</FormLabel>
                           </FormItem>
                           <FormItem className="flex items-center space-x-2">
                             <FormControl><RadioGroupItem value="fahrenheit" id="fahrenheit" /></FormControl>
-                            <Label htmlFor="fahrenheit">Fahrenheit (°F)</Label>
+                            <FormLabel htmlFor="fahrenheit" className="font-normal">Fahrenheit (°F)</FormLabel>
                           </FormItem>
                         </RadioGroup>
                       </FormControl>
@@ -157,19 +177,65 @@ export function WeatherPage() {
                   name="windUnit"
                   render={({ field }) => (
                     <FormItem className="space-y-3">
-                      <Label className="flex items-center gap-2"><Wind className="h-4 w-4"/> Wind Speed</Label>
+                      <FormLabel className="flex items-center gap-2"><Wind className="h-4 w-4"/> Wind Speed</FormLabel>
                       <FormControl>
                         <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-4">
                           <FormItem className="flex items-center space-x-2">
                             <FormControl><RadioGroupItem value="kmh" id="kmh" /></FormControl>
-                            <Label htmlFor="kmh">km/h</Label>
+                            <FormLabel htmlFor="kmh" className="font-normal">km/h</FormLabel>
                           </FormItem>
                           <FormItem className="flex items-center space-x-2">
                             <FormControl><RadioGroupItem value="mph" id="mph" /></FormControl>
-                            <Label htmlFor="mph">mph</Label>
+                            <FormLabel htmlFor="mph" className="font-normal">mph</FormLabel>
                           </FormItem>
                         </RadioGroup>
                       </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="dateRange"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                       <FormLabel className="mb-2.5">Historical Data (Optional)</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              id="date"
+                              variant={"outline"}
+                              className={cn(
+                                "justify-start text-left font-normal",
+                                !date?.from && "text-muted-foreground"
+                              )}
+                            >
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {date?.from ? (
+                                date.to ? (
+                                  <>
+                                    {format(date.from, "LLL dd, y")} -{" "}
+                                    {format(date.to, "LLL dd, y")}
+                                  </>
+                                ) : (
+                                  format(date.from, "LLL dd, y")
+                                )
+                              ) : (
+                                <span>Pick a date range</span>
+                              )}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              initialFocus
+                              mode="range"
+                              defaultMonth={date?.from}
+                              selected={date}
+                              onSelect={setDate}
+                              numberOfMonths={2}
+                              disabled={(day) => day > subDays(new Date(), 1) || day < new Date("1940-01-01")}
+                            />
+                          </PopoverContent>
+                        </Popover>
                     </FormItem>
                   )}
                 />
@@ -187,9 +253,15 @@ export function WeatherPage() {
       
       {weatherData && (
         <div className="animate-in fade-in-50 duration-500 space-y-8">
-          <CurrentWeather data={weatherData} />
-          <HourlyForecast data={weatherData} />
-          <DailyForecast data={weatherData} />
+          {date?.from && date?.to ? (
+            <HistoricalWeather data={weatherData} />
+          ) : (
+            <>
+              <CurrentWeather data={weatherData} />
+              <HourlyForecast data={weatherData} />
+              <DailyForecast data={weatherData} />
+            </>
+          )}
         </div>
       )}
     </div>
