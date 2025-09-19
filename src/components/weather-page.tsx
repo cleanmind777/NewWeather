@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { MapPin, Wind, Thermometer, CalendarIcon, Globe } from 'lucide-react';
 import { format, subDays } from 'date-fns';
-import { DateRange } from 'react-day-picker';
+import type { DateRange } from 'react-day-picker';
 import Image from 'next/image';
 
 import type { WeatherData, TemperatureUnit, WindSpeedUnit } from '@/lib/types';
@@ -192,7 +192,7 @@ export function WeatherPage() {
                       onClick={handleMapClick}
                     >
                     <Image 
-                      src="https://picsum.photos/seed/worldmap/1200/600"
+                      src="https://images.unsplash.com/photo-1564013799919-ab600027ffc6?q=80&w=2070&auto=format&fit=crop"
                       alt="World Map"
                       fill
                       className="object-cover group-hover:opacity-80 transition-opacity"
