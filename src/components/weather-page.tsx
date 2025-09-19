@@ -63,7 +63,7 @@ export function WeatherPage() {
     },
   });
 
-  const handleMapClick = (event: React.MouseEvent<HTMLDivElement>) => {
+  const handleMapClick = async (event: React.MouseEvent<HTMLDivElement>) => {
     const { left, top, width, height } = event.currentTarget.getBoundingClientRect();
     const x = event.clientX - left;
     const y = event.clientY - top;
@@ -73,8 +73,19 @@ export function WeatherPage() {
 
     form.setValue('latitude', latitude);
     form.setValue('longitude', longitude);
-    form.setValue('location', `Lat: ${latitude.toFixed(2)}, Lon: ${longitude.toFixed(2)}`);
     
+    try {
+      const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?latitude=${latitude}&longitude=${longitude}&count=1`);
+      const geoData = await geoRes.json();
+      if (geoData.results?.[0]?.name) {
+        form.setValue('location', geoData.results[0].name);
+      } else {
+        form.setValue('location', `Lat: ${latitude.toFixed(2)}, Lon: ${longitude.toFixed(2)}`);
+      }
+    } catch (error) {
+      form.setValue('location', `Lat: ${latitude.toFixed(2)}, Lon: ${longitude.toFixed(2)}`);
+    }
+
     // Automatically submit form on map click
     form.handleSubmit(onSubmit)();
   };
