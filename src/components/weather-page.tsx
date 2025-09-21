@@ -83,11 +83,25 @@ export function WeatherPage() {
         const locationParts = [result.name, result.admin1, result.country].filter(Boolean);
         const locationName = locationParts.join(', ');
         form.setValue('location', locationName);
+        toast({
+          title: "Location Selected",
+          description: `Showing weather for ${locationName}`,
+        });
       } else {
-        form.setValue('location', `Lat: ${latitude.toFixed(2)}, Lon: ${longitude.toFixed(2)}`);
+        const locationName = `Lat: ${latitude.toFixed(2)}, Lon: ${longitude.toFixed(2)}`;
+        form.setValue('location', locationName);
+        toast({
+            title: "Location Selected",
+            description: `Showing weather for ${locationName}`,
+        });
       }
     } catch (error) {
-      form.setValue('location', `Lat: ${latitude.toFixed(2)}, Lon: ${longitude.toFixed(2)}`);
+      const locationName = `Lat: ${latitude.toFixed(2)}, Lon: ${longitude.toFixed(2)}`;
+      form.setValue('location', locationName);
+      toast({
+        title: "Location Selected",
+        description: `Showing weather for ${locationName}`,
+    });
     }
 
     // Automatically submit form on map click
