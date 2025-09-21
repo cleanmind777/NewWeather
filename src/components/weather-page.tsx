@@ -75,34 +75,24 @@ export function WeatherPage() {
     form.setValue('latitude', latitude);
     form.setValue('longitude', longitude);
     
+    let locationName = `Lat: ${latitude.toFixed(2)}, Lon: ${longitude.toFixed(2)}`;
     try {
       const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?latitude=${latitude}&longitude=${longitude}&count=1`);
       const geoData = await geoRes.json();
       if (geoData.results?.[0]) {
         const result = geoData.results[0];
         const locationParts = [result.name, result.admin1, result.country].filter(Boolean);
-        const locationName = locationParts.join(', ');
-        form.setValue('location', locationName);
-        toast({
-          title: "Location Selected",
-          description: `Showing weather for ${locationName}`,
-        });
-      } else {
-        const locationName = `Lat: ${latitude.toFixed(2)}, Lon: ${longitude.toFixed(2)}`;
-        form.setValue('location', locationName);
-        toast({
-            title: "Location Selected",
-            description: `Showing weather for ${locationName}`,
-        });
+        locationName = locationParts.join(', ');
       }
     } catch (error) {
-      const locationName = `Lat: ${latitude.toFixed(2)}, Lon: ${longitude.toFixed(2)}`;
-      form.setValue('location', locationName);
-      toast({
-        title: "Location Selected",
-        description: `Showing weather for ${locationName}`,
-    });
+      console.error("Geocoding API failed, falling back to coordinates.", error);
     }
+
+    form.setValue('location', locationName);
+    toast({
+      title: "Location Selected",
+      description: `Showing weather for ${locationName}`,
+    });
 
     // Automatically submit form on map click
     form.handleSubmit(onSubmit)();
@@ -224,7 +214,7 @@ export function WeatherPage() {
                       onClick={handleMapClick}
                     >
                     <Image 
-                      src="https://images.unsplash.com/photo-1539635278303-d4002c07eae3?q=80&w=2070&auto=format&fit=crop"
+                      src="https://images.unsplash.com/photo-1564053489984-3c7bb6bd5792?q=80&w=2070&auto=format&fit=crop"
                       alt="World Map"
                       fill
                       className="object-cover group-hover:opacity-80 transition-opacity"
