@@ -77,12 +77,14 @@ export function WeatherPage() {
     
     let locationName = `Lat: ${latitude.toFixed(2)}, Lon: ${longitude.toFixed(2)}`;
     try {
-      const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?latitude=${latitude}&longitude=${longitude}&count=1`);
+      const geoRes = await fetch(`https://geocode.maps.co/reverse?lat=${latitude}&lon=${longitude}`);
       const geoData = await geoRes.json();
-      if (geoData.results?.[0]) {
-        const result = geoData.results[0];
-        const locationParts = [result.name, result.admin1, result.country].filter(Boolean);
+      if (geoData.address) {
+        const { city, state, country } = geoData.address;
+        const locationParts = [city, state, country].filter(Boolean);
         locationName = locationParts.join(', ');
+      } else if (geoData.display_name) {
+        locationName = geoData.display_name;
       }
     } catch (error) {
       console.error("Geocoding API failed, falling back to coordinates.", error);
@@ -110,6 +112,7 @@ export function WeatherPage() {
         if (!values.location) {
           throw new Error('Please enter a location or select a point on the map.');
         }
+        // Using Open-Meteo for forward geocoding as geocode.maps.co requires an API key for search
         const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${values.location}&count=1`);
         const geoData = await geoRes.json();
         if (!geoData.results?.[0]) {
