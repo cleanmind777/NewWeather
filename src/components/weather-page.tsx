@@ -95,7 +95,7 @@ export function WeatherPage() {
     });
 
     // Automatically submit form on map click
-    form.handleSubmit(onSubmit)();
+    await form.handleSubmit(onSubmit)();
   };
 
   const onSubmit = async (values: FormValues) => {
