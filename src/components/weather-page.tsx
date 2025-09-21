@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -77,8 +78,10 @@ export function WeatherPage() {
     try {
       const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?latitude=${latitude}&longitude=${longitude}&count=1`);
       const geoData = await geoRes.json();
-      if (geoData.results?.[0]?.name) {
-        const locationName = `${geoData.results[0].name}${geoData.results[0].country ? ', ' + geoData.results[0].country : ''}`;
+      if (geoData.results?.[0]) {
+        const result = geoData.results[0];
+        const locationParts = [result.name, result.admin1, result.country].filter(Boolean);
+        const locationName = locationParts.join(', ');
         form.setValue('location', locationName);
       } else {
         form.setValue('location', `Lat: ${latitude.toFixed(2)}, Lon: ${longitude.toFixed(2)}`);
@@ -108,9 +111,11 @@ export function WeatherPage() {
         if (!geoData.results?.[0]) {
           throw new Error('Location not found. Please try another.');
         }
-        latitude = geoData.results[0].latitude;
-        longitude = geoData.results[0].longitude;
-        name = `${geoData.results[0].name}${geoData.results[0].country ? ', ' + geoData.results[0].country : ''}`;
+        const result = geoData.results[0];
+        latitude = result.latitude;
+        longitude = result.longitude;
+        const locationParts = [result.name, result.admin1, result.country].filter(Boolean);
+        name = locationParts.join(', ');
         form.setValue('location', name);
       }
 
@@ -205,7 +210,7 @@ export function WeatherPage() {
                       onClick={handleMapClick}
                     >
                     <Image 
-                      src="https://images.unsplash.com/photo-1564013799919-ab600027ffc6?q=80&w=2070&auto=format&fit=crop"
+                      src="https://images.unsplash.com/photo-1539635278303-d4002c07eae3?q=80&w=2070&auto=format&fit=crop"
                       alt="World Map"
                       fill
                       className="object-cover group-hover:opacity-80 transition-opacity"
